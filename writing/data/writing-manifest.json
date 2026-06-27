@@ -1,0 +1,69 @@
+[
+  {
+    "slug": "none",
+    "title": "(none)",
+    "subtitle": "the dark",
+    "file": "pieces/(none).md",
+    "type": "snippet",
+    "status": "published",
+    "date": "2025-09-25",
+    "tags": ["mental health", "silence", "darkness", "depression", "anxiety"],
+    "contentWarnings": [],
+    "excerpt": "you know what's down there in the dark",
+    "sort": 10
+  },
+  {
+    "slug": "presence",
+    "title": "Presence",
+    "subtitle": "Sometimes, being present is the hardest thing.",
+    "file": "pieces/presence.md",
+    "type": "reflection",
+    "status": "unpublished",
+    "date": "2026-04-18",
+    "tags": ["presence", "timing", "vulnerability"],
+    "contentWarnings": [],
+    "excerpt": "Sometimes someone comes into your life who seems to offer you everything you want, everything you need.",
+    "sort": 20
+  },
+  {
+    "slug": "respect-vs-deference",
+    "title": "Respect vs Deference",
+    "subtitle": "Respect does not mean obedience.",
+    "file": "pieces/respect-vs-deference.md",
+    "type": "essay fragment",
+    "status": "unpublished",
+    "date": "2026-05-26",
+    "tags": ["respect", "power", "boundaries", "kink"],
+    "contentWarnings": [],
+    "excerpt": "Respect does not mean deference. Respect is basic dignity, not servitude.",
+    "sort": 30
+  },
+  {
+    "slug": "ghosting",
+    "title": "Ghosting",
+    "subtitle": "The art of disappearing.",
+    "file": "pieces/ghosting.md",
+    "featured-image": "ghosting.png",
+    "type": "commission",
+    "status": "published",
+    "date": "2025-08-25",
+    "tags": ["respect", "power", "boundaries", "relationships", "noir"],
+    "contentWarnings": [],
+    "excerpt": "Ghosting has the same sting as a cheap detective novel cliché: the character disappears into the fog, and the only thing left behind is the hollow echo of unanswered questions. No note, no explanation, just silence thick enough to choke on. Let's cut through the fog. Ghosting, when nothing catastrophic has happened, isn't clever, mysterious, or self-protective. It's emotional immaturity dressed up as avoidance.",
+    "sort": 30
+  },
+  {
+    "slug": "social-psychology",
+    "title": "The Alley of Easy Answers",
+    "subtitle": "Weaponized Social Media Psychology.",
+    "file": "pieces/alley-of-easy-answers.md",
+    "featured-image": "social-psychology.png",
+    "type": "commission",
+    "status": "published",
+    "date": "2025-08-29",
+    "tags": ["respect", "power", "boundaries", "relationships", "noir"],
+    "contentWarnings": [],
+    "excerpt": "The city never sleeps, it just trades shadows. Neon signs buzz over cracked sidewalks, each one promising salvation for the right price. Step into the smoke-filled alleys of the digital bazaar and you'll see it plain as day: vendors peddling psychology like it's cheap whiskey, watered down and poured into chipped glasses. Everyone's thirsty, and nobody asks what's really in the bottle.",
+    "sort": 31
+  }
+]

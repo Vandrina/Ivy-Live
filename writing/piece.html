@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ivy — Writing</title>
+<meta name="description" content="A writing piece from Ivy.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/uncial-antiqua@5/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/pirata-one@5/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/im-fell-english@5/index.css">
+<link rel="stylesheet" href="../assets/css/site.css">
+<link rel="stylesheet" href="../assets/css/writing.css">
+</head>
+<body data-screen-label="Writing — Piece" data-density="cozy" data-title-font="metamorphous" data-ornament="default">
+
+<nav class="mainnav" aria-label="Ivy main">
+  <div class="mainnav-inner">
+    <a class="brand-wordmark" href="../index.html" aria-label="Ivy — home">
+      Ivy
+      <span class="est">Est. MMXVIII</span>
+    </a>
+    <div class="mainnav-links">
+      <a href="../index.html">Home</a>
+      <a href="index.html" class="current">Writing</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+<div class="col">
+
+  <a class="return left" href="index.html">Archive</a>
+
+  <article style="margin-top:42px;">
+    <header class="piece-header" id="pieceHeader" hidden>
+      <div class="eyebrow" id="pieceType">Writing</div>
+      <h1 class="piece-title" id="pieceTitle"></h1>
+      <p class="piece-subtitle" id="pieceSubtitle"></p>
+      <div class="piece-meta" id="pieceMeta"></div>
+      <div class="piece-actions">
+        <button class="share-link-btn" id="shareLinkBtn" type="button">Share</button>
+        <span class="share-feedback" id="shareFeedback" role="status" aria-live="polite">Link copied</span>
+      </div>
+    </header>
+
+    <div class="piece-body" id="pieceBody">
+      <p class="loading-state">Loading...</p>
+    </div>
+  </article>
+
+  <div class="related-strip" id="relatedStrip" hidden>
+    <div class="related-cards" id="relatedCards"></div>
+  </div>
+
+  <div class="footer-line">Ivy · Writing</div>
+
+</div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // The piece page is driven by the URL query string, for example: piece.html?piece=ghosting
+  var params = new URLSearchParams(window.location.search);
+  var pieceSlug = params.get('piece');
+
+  // Cached DOM references used by the render and error functions below.
+  var header = document.getElementById('pieceHeader');
+  var body = document.getElementById('pieceBody');
+  var shareLinkBtn = document.getElementById('shareLinkBtn');
+  var shareFeedback = document.getElementById('shareFeedback');
+  var relatedStrip = document.getElementById('relatedStrip');
+  var relatedCards = document.getElementById('relatedCards');
+  var canonicalShareUrl = '';
+  var currentItem = null;
+
+  // Without a slug, there is no specific piece to show, so return to the archive.
+  if (!pieceSlug) {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  // Main workflow:
+  // 1. Load the manifest.
+  // 2. Find the matching piece by slug.
+  // 3. Render metadata and related links.
+  // 4. Fetch and render the markdown body from the manifest's file path.
+  fetch('data/writing-manifest.json')
+    .then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function (manifest) {
+      currentItem = manifest.find(function (entry) {
+        return entry.slug === pieceSlug;
+      });
+
+      if (!currentItem) {
+        showError('Piece not found', 'The requested writing could not be located.');
+        return null;
+      }
+
+      renderPieceMeta(currentItem);
+      renderRelatedLinks(currentItem);
+      setCanonicalShareUrl(currentItem.slug);
+
+      // Body errors are handled separately so the title/meta remain visible.
+      return fetchPieceMarkdown(currentItem)
+        .then(function (markdown) {
+          body.innerHTML = renderFeaturedImageHtml(currentItem) + markdownToHtml(markdown);
+        })
+        .catch(function (err) {
+          console.error('Failed to load piece body:', err);
+          showBodyError('Could not load piece text', 'The title and metadata loaded, but the body text file could not be fetched.');
+          return null;
+        });
+    })
+    .catch(function (err) {
+      console.error('Failed to load piece:', err);
+      showError('Could not load piece', 'Please return to the writing archive.');
+    });
+
+  if (shareLinkBtn) {
+    shareLinkBtn.addEventListener('click', copyShareLink);
+  }
+
+  // Renders title, subtitle, date, tags, and any content warning from the manifest.
+  function renderPieceMeta(item) {
+    document.title = (item.title || 'Writing') + ' — Ivy';
+    document.getElementById('pieceTitle').textContent = item.title || '';
+    document.getElementById('pieceSubtitle').textContent = item.subtitle || '';
+    document.getElementById('pieceType').textContent = item.type || 'Writing';
+
+    var meta = document.getElementById('pieceMeta');
+    meta.innerHTML = '';
+
+    if (item.date) {
+      var date = document.createElement('span');
+      date.className = 'piece-date';
+      date.textContent = formatDate(item.date);
+      meta.appendChild(date);
+    }
+
+    if (item.tags && item.tags.length) {
+      var tags = document.createElement('span');
+      tags.className = 'piece-tags';
+      tags.textContent = item.tags.map(formatLabel).join(' · ');
+      meta.appendChild(tags);
+    }
+
+    if (item.contentWarnings && item.contentWarnings.length) {
+      var warning = document.createElement('div');
+      warning.className = 'content-warning';
+      warning.textContent = 'Content warning: ' + item.contentWarnings.join(', ');
+      meta.appendChild(warning);
+    }
+
+    header.hidden = false;
+  }
+
+  // Builds the optional thumbnail markup. If the image fails, only the figure is hidden.
+  function renderFeaturedImageHtml(item) {
+    var image = item['featured-image'];
+    if (!image) return '';
+    return '<figure class="piece-thumb"><img src="' + escapeHtml(resolveImagePath(image)) + '" alt="' + escapeHtml(item.title ? item.title + ' featured image' : '') + '" onerror="this.closest(\'figure\').hidden=true"></figure>';
+  }
+
+  // Bare image filenames are assumed to live in writing/images/.
+  function resolveImagePath(image) {
+    if (/^(https?:)?\/\//.test(image) || image.charAt(0) === '/') return image;
+    if (image.indexOf('/') !== -1) return image;
+    return 'images/' + image;
+  }
+
+  // Fetches the exact markdown path provided by writing-manifest.json.
+  function fetchPieceMarkdown(item) {
+    if (!item.file) throw new Error('Missing file path for piece: ' + (item.slug || 'unknown'));
+    return fetch(item.file, { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + item.file);
+      return r.text();
+    });
+  }
+
+  // Builds lightweight navigation cards back to archive, tag, and type views.
+  function renderRelatedLinks(item) {
+    relatedCards.innerHTML = '';
+
+
+    if (item.tags && item.tags.length) {
+      var firstTag = item.tags[0];
+      var tagCard = document.createElement('a');
+      tagCard.className = 'related-card';
+      tagCard.href = 'index.html?tag=' + encodeURIComponent(firstTag);
+      tagCard.innerHTML = '<div class="related-section">Related</div><div class="related-title">See more ' + escapeHtml(formatLabel(firstTag)) + '</div><div class="related-tag">' + escapeHtml(firstTag) + '</div>';
+      relatedCards.appendChild(tagCard);
+    }
+
+    if (item.type) {
+      var typeCard = document.createElement('a');
+      typeCard.className = 'related-card';
+      typeCard.href = 'index.html?type=' + encodeURIComponent(item.type);
+      typeCard.innerHTML = '<div class="related-section">Writing</div><div class="related-title">See more ' + escapeHtml(formatLabel(item.type)) + '</div>';
+      relatedCards.appendChild(typeCard);
+    }
+
+    relatedStrip.hidden = false;
+  }
+
+  // Normalizes the share URL to the canonical piece.html?piece=slug format.
+  function setCanonicalShareUrl(slug) {
+    var cleanPath = window.location.pathname.replace(/\/[^/]*$/, '/piece.html');
+    canonicalShareUrl = window.location.origin + cleanPath + '?piece=' + encodeURIComponent(slug);
+    window.history.replaceState({}, '', cleanPath + '?piece=' + encodeURIComponent(slug));
+
+    var canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = canonicalShareUrl;
+  }
+
+  function copyShareLink() {
+    var url = canonicalShareUrl || window.location.href;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(showShareFeedback).catch(function () {
+        fallbackCopy(url);
+      });
+      return;
+    }
+    fallbackCopy(url);
+  }
+
+  // Fallback copy method for browsers that do not allow navigator.clipboard.
+  function fallbackCopy(url) {
+    var input = document.createElement('textarea');
+    input.value = url;
+    input.setAttribute('readonly', '');
+    input.style.position = 'fixed';
+    input.style.top = '-999px';
+    document.body.appendChild(input);
+    input.select();
+    try {
+      document.execCommand('copy');
+      showShareFeedback();
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+    document.body.removeChild(input);
+  }
+
+  function showShareFeedback() {
+    if (!shareFeedback) return;
+    shareFeedback.classList.add('visible');
+    window.clearTimeout(showShareFeedback.timer);
+    showShareFeedback.timer = window.setTimeout(function () {
+      shareFeedback.classList.remove('visible');
+    }, 1500);
+  }
+
+  // Minimal markdown renderer for the small subset currently used by the writing pieces.
+  function markdownToHtml(markdown) {
+    var text = markdown.replace(/\r\n/g, '\n').trim();
+    if (!text) return '';
+
+    var blocks = text.split(/\n{2,}/);
+    return blocks.map(function (block) {
+      var clean = block.trim();
+
+      if (/^---+$/.test(clean)) return '<hr>';
+      if (/^###\s+/.test(clean)) return '<h3>' + inlineMarkdown(clean.replace(/^###\s+/, '')) + '</h3>';
+      if (/^##\s+/.test(clean)) return '<h2>' + inlineMarkdown(clean.replace(/^##\s+/, '')) + '</h2>';
+      if (/^#\s+/.test(clean)) return '<h2>' + inlineMarkdown(clean.replace(/^#\s+/, '')) + '</h2>';
+      if (/^>\s?/.test(clean)) {
+        return '<blockquote>' + inlineMarkdown(clean.replace(/^>\s?/gm, '').replace(/\n/g, '<br>')) + '</blockquote>';
+      }
+      if (/^[-*]\s+/m.test(clean)) {
+        var items = clean.split('\n').map(function (line) {
+          return line.replace(/^[-*]\s+/, '').trim();
+        }).filter(Boolean).map(function (line) {
+          return '<li>' + inlineMarkdown(line) + '</li>';
+        }).join('');
+        return '<ul>' + items + '</ul>';
+      }
+
+      return '<p>' + inlineMarkdown(clean).replace(/\n/g, '<br>') + '</p>';
+    }).join('\n');
+  }
+
+  // Escapes user/content text first, then restores the small inline markdown subset.
+  function inlineMarkdown(value) {
+    return escapeHtml(value)
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  }
+
+  function showBodyError(title, desc) {
+    body.innerHTML = '<div class="body-error"><h2>' + escapeHtml(title) + '</h2><p>' + escapeHtml(desc) + '</p></div>';
+  }
+
+  function showError(title, desc) {
+    header.hidden = true;
+    body.innerHTML = '<div class="error-state"><h2>' + escapeHtml(title) + '</h2><p>' + escapeHtml(desc) + '</p><p><a class="return left" href="index.html">Archive</a></p></div>';
+  }
+
+  function formatDate(dateString) {
+    var date = new Date(dateString + 'T00:00:00');
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  function formatLabel(value) {
+    return String(value).split('-').map(function (word) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(' ');
+  }
+
+  function escapeHtml(value) {
+    return String(value || '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ivy — Holistic · Goth · Nerdy</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/uncial-antiqua@5/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/pirata-one@5/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/im-fell-english@5/index.css">
+<link rel="stylesheet" href="assets/css/site.css">
+<link rel="stylesheet" href="assets/css/writing.css">
+<link rel="stylesheet" href="assets/css/watermark.css">
+</head>
+<body data-screen-label="Ivy — Home" data-density="cozy" data-title-font="metamorphous" data-ornament="default">
+
+<img class="writing-watermark" src="assets/site-images/gothic-window-watermark.svg" alt="" aria-hidden="true">
+
+<nav class="mainnav" aria-label="Ivy main">
+  <div class="mainnav-inner">
+    <a class="brand-wordmark" href="index.html" aria-label="Ivy — home">
+      Ivy
+      <span class="est">Est. MMXVIII</span>
+    </a>
+    <div class="mainnav-links">
+      <a href="index.html" class="current">Home</a>
+      <a href="writing/index.html">Writing</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+<div class="col">
+
+  <div class="eyebrow" style="text-align:center;margin-bottom:22px;">Writer · Viking · Nerd</div>
+  <h1 class="display" style="margin-bottom:14px;">Ivy</h1>
+  <!-- <p class="dek" style="font-size:16px;">A Work in Progress</p> -->
+
+  <p class="lede" style="text-align:center;margin:42px auto 0;max-width:620px;">
+    For the soft feral people with one foot in the forest and one in the machine. For the
+    <em class="literary">witch&nbsp;&amp;&nbsp;coder</em>, the <em class="literary">homemaker&nbsp;&amp;&nbsp;heathen</em>, the
+    <em class="literary">kink&nbsp;&amp;&nbsp;nerd</em> who want their living spaces, their bodies, and their
+    bookshelves to all <em class="literary">match</em>.
+  </p>
+
+  <!-- <div class="portrait" role="img" aria-label="portrait placeholder">
+    <span class="stub">— portrait —</span>
+  </div> 
+
+  <p style="text-align:center;font-family:var(--mono);font-size:9px;letter-spacing:.26em;color:var(--body-faint);text-transform:uppercase;margin-top:-12px;">
+    [ drop your photograph here ]
+  </p>-->
+
+  <!--<div class="divider" style="margin:64px auto 8px;">
+    <span class="line"></span>
+    <span class="glyph">✦  Rooms  ✦</span>
+    <span class="line"></span>
+  </div> 
+
+  <div class="doors doors-temp">
+    <a class="door door--writing" href="writing/index.html">
+      <div class="door-num">i.</div>
+      <div class="door-title">Writing</div>
+      <div class="door-tag">Essays, short fiction, and shorter strangeness — a working archive.</div>
+      <div class="door-enter">Enter the archive</div>
+    </a>
+  </div>-->
+
+   <div class="divider" style="margin:64px auto 8px;">
+    <span class="line"></span>
+    <span class="glyph">✦  Read Some Stuff  ✦</span>
+    <span class="line"></span>
+   </div>
+
+  <a class="featured-link" id="latestWritingLink" href="writing/index.html">
+    <div class="card">
+      <span class="corner-bl"></span><span class="corner-br"></span>
+      <div class="card-body" id="latestWritingCard">
+        <div class="meta-stack">
+          <span>Essays, Commissioned Work, General Strangeness</span>
+        </div>
+        <br>
+        <p>Loading latest entries...</p>
+        <div class="return right">Read</div>
+      </div>
+    </div>
+  </a>
+
+  <div class="divider" style="margin:48px auto 28px;">
+    <span class="line"></span>
+    <span class="glyph">Stay&nbsp;in&nbsp;touch</span>
+    <span class="line"></span>
+  </div>
+
+  <div class="inquire-block">
+    <p class="dek">Send a line, or subscribe to know when something new opens.</p>
+  </div>
+
+  <div class="footer-line">Ivy · Built slowly · Held carefully</div>
+
+</div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var latestLink = document.getElementById('latestWritingLink');
+  var latestCard = document.getElementById('latestWritingCard');
+
+  fetch('writing/data/writing-manifest.json')
+    .then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function (items) {
+      var latest = items
+        .filter(function (item) { return item.status === 'published'; })
+        .sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); })[0];
+
+      if (!latest) return;
+
+      latestLink.href = 'writing/piece.html?piece=' + encodeURIComponent(latest.slug);
+      latestCard.innerHTML =
+        '<div class="featured-card-head">' +
+          '<div class="meta-stack">' +
+            '<span>' + escapeHtml(formatLabel(latest.type || 'Writing')) + '</span>' +
+            (latest.date ? '<span>' + escapeHtml(formatDate(latest.date)) + '</span>' : '') +
+          '</div>' +
+          renderTags(latest.tags || []) +
+        '</div>' +
+        '<h2>' + escapeHtml(latest.title || '') + '</h2>' +
+        '<p>' + escapeHtml(latest.excerpt || '') + '</p>' +
+        '<div class="return right">Read</div>';
+    })
+    .catch(function (err) {
+      console.error('Latest writing failed:', err);
+    });
+
+  function renderTags(tags) {
+    if (!tags.length) return '';
+    return '<div class="featured-tags">' + tags.map(function (tag) {
+      return '<span>' + escapeHtml(tag) + '</span>';
+    }).join('') + '</div>';
+  }
+
+  function formatDate(dateString) {
+    var date = new Date(dateString + 'T00:00:00');
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  function formatLabel(value) {
+    return String(value).split('-').map(function (word) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(' ');
+  }
+
+  function escapeHtml(value) {
+    return String(value || '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+})();
+</script>
+</body>
+</html>
